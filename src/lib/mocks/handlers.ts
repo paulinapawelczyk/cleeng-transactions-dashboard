@@ -1,18 +1,13 @@
 import { http, HttpResponse, delay } from 'msw';
 import { mockTransactions } from './data';
-import type { RetryPaymentResult, Transaction } from '@/lib/types';
+import type { RetryPaymentResult } from '@/lib/types';
 
 interface RetryRequestBody {
   transactionId: string;
 }
 
-interface InvoicePathParams {
-  id: string;
-  [key: string]: string;
-}
-
 export const handlers = [
-  http.get<never, never, Transaction[]>('/api/transactions', async () => {
+  http.get('/api/transactions', async () => {
     await delay(500);
     return HttpResponse.json(mockTransactions);
   }),
@@ -28,9 +23,13 @@ export const handlers = [
     }
   ),
 
-  http.get<InvoicePathParams>(
+  http.get<{ id: string }>(
     '/api/transactions/:id/invoice',
-    async () => {
+    async ({ params }) => {
+      const exists = mockTransactions.some((t) => t.id === params.id);
+      if (!exists) {
+        return new HttpResponse(null, { status: 404 });
+      }
       await delay(2000);
       const pdf = new Blob(['%PDF-1.4 mock invoice content'], {
         type: 'application/pdf',
