@@ -62,12 +62,14 @@ describe('TransactionsTable retry flow', () => {
 
     await user.click(retryButton);
 
-    // CRITICAL: all three rows must enter retrying state simultaneously.
-    // Sequential retries would show only one spinner here.
+    // All three rows enter retrying state on click (state init is batched).
+    // True concurrency is verified below by the staggered resolution timing.
     const retryingTexts = await screen.findAllByText('Retrying…');
     expect(retryingTexts).toHaveLength(3);
 
-    // After ~50ms: txn_test_2 resolves → 2 still retrying.
+    // After ~50ms: txn_test_2 resolves while others still in flight.
+    // Sequential retries would have all 3 still retrying here (because
+    // txn_test_3 hadn't even started). THIS is the concurrency proof.
     await waitFor(
       () => {
         expect(screen.queryAllByText('Retrying…')).toHaveLength(2);
