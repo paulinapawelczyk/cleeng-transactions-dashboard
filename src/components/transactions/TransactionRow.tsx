@@ -4,6 +4,7 @@ import type { Transaction } from '@/lib/types';
 import type { RowRetryState } from '@/hooks/useTransactionsState';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Spinner } from '@/components/ui/Spinner';
+import { DownloadInvoiceButton } from './DownloadInvoiceButton';
 import { formatAmount, formatDate } from './formatters';
 
 interface TransactionRowProps {
@@ -56,7 +57,9 @@ export function TransactionRow({
           <StatusBadge status={transaction.status} />
         )}
       </td>
-      <td className="w-32 px-4 py-3 text-sm" />
+      <td className="w-32 px-4 py-3 text-sm">
+        <DownloadInvoiceButton transactionId={transaction.id} />
+      </td>
     </tr>
   );
 }
