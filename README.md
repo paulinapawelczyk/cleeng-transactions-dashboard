@@ -4,7 +4,7 @@ A small dashboard for a Cleeng subscriber to review their transaction history, r
 
 ## Demo
 
-Screenshot below.
+![Transactions dashboard with selected failed transactions](docs/screenshot.png)
 
 ## Stack
 
