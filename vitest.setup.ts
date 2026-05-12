@@ -11,8 +11,8 @@ beforeAll(() => {
 afterEach(() => {
   // Drops any per-test server.use(...) overrides so tests stay isolated.
   server.resetHandlers();
-  // Restores anything mockObjectURL() / other tests may have stubbed.
-  vi.unstubAllGlobals();
+  // Restores spies installed via vi.spyOn (e.g., URL methods in mockObjectURL).
+  vi.restoreAllMocks();
 });
 
 afterAll(() => {

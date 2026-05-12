@@ -38,22 +38,22 @@ export function renderWithProviders(
   return { ...result, queryClient };
 }
 
-interface MockObjectURLResult {
-  revokeObjectURLCalls: string[];
-}
-
-export function mockObjectURL(): MockObjectURLResult {
+export function mockObjectURL(): { revokeObjectURLCalls: string[] } {
   const revokeObjectURLCalls: string[] = [];
 
-  // stubGlobal pairs with vi.unstubAllGlobals() in vitest.setup.ts so the
-  // original URL is restored after each test — no manual teardown needed
-  // in individual test files.
-  vi.stubGlobal('URL', {
-    ...URL,
-    createObjectURL: vi.fn(() => 'blob:mock-url'),
-    revokeObjectURL: vi.fn((url: string) => {
-      revokeObjectURLCalls.push(url);
-    }),
+  // JSDOM doesn't implement these natively – assign safe defaults so
+  // vi.spyOn has something to wrap. Idempotent: skips assignment if
+  // another test already set them.
+  if (typeof URL.createObjectURL !== 'function') {
+    URL.createObjectURL = () => '';
+  }
+  if (typeof URL.revokeObjectURL !== 'function') {
+    URL.revokeObjectURL = () => {};
+  }
+
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation((url) => {
+    revokeObjectURLCalls.push(url);
   });
 
   return { revokeObjectURLCalls };
