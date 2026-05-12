@@ -10,7 +10,6 @@ export type RowRetryState =
 export interface UseTransactionsStateReturn {
   selectedIds: Set<string>;
   toggleSelection: (id: string) => void;
-  clearSelection: () => void;
   rowRetryState: (id: string) => RowRetryState;
   isRetryInProgress: boolean;
   retrySelected: () => Promise<void>;
@@ -36,10 +35,6 @@ export function useTransactionsState(): UseTransactionsStateReturn {
       }
       return next;
     });
-  }, []);
-
-  const clearSelection = useCallback(() => {
-    setSelectedIds(new Set());
   }, []);
 
   const rowRetryState = useCallback(
@@ -99,7 +94,6 @@ export function useTransactionsState(): UseTransactionsStateReturn {
   return {
     selectedIds,
     toggleSelection,
-    clearSelection,
     rowRetryState,
     isRetryInProgress,
     retrySelected,
