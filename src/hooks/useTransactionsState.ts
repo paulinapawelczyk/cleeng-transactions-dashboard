@@ -1,4 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { retryPayment } from '@/lib/api/transactions';
+import type { Transaction } from '@/lib/types';
 
 export type RowRetryState =
   | { kind: 'idle' }
@@ -14,8 +17,10 @@ export interface UseTransactionsStateReturn {
 }
 
 const IDLE: RowRetryState = { kind: 'idle' };
+const RETRYING: RowRetryState = { kind: 'retrying' };
 
 export function useTransactionsState(): UseTransactionsStateReturn {
+  const queryClient = useQueryClient();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [retryStates, setRetryStates] = useState<Map<string, RowRetryState>>(
     () => new Map()
@@ -50,8 +55,42 @@ export function useTransactionsState(): UseTransactionsStateReturn {
   }, [retryStates]);
 
   const retrySelected = useCallback(async (): Promise<void> => {
-    console.log('retry called');
-  }, []);
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    setRetryStates((prev) => {
+      const next = new Map(prev);
+      for (const id of ids) next.set(id, RETRYING);
+      return next;
+    });
+
+    await Promise.allSettled(
+      ids.map(async (id) => {
+        try {
+          const result = await retryPayment(id);
+          queryClient.setQueryData<Transaction[]>(['transactions'], (old) =>
+            old?.map((t) =>
+              t.id === id ? { ...t, status: result.status } : t
+            )
+          );
+        } catch {
+          queryClient.setQueryData<Transaction[]>(['transactions'], (old) =>
+            old?.map((t) =>
+              t.id === id ? { ...t, status: 'failed' as const } : t
+            )
+          );
+        }
+
+        setRetryStates((prev) => {
+          const next = new Map(prev);
+          next.delete(id);
+          return next;
+        });
+      })
+    );
+
+    setSelectedIds(new Set());
+  }, [queryClient, selectedIds]);
 
   return {
     selectedIds,
