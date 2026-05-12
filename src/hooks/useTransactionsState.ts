@@ -55,6 +55,10 @@ export function useTransactionsState(): UseTransactionsStateReturn {
   }, [retryStates]);
 
   const retrySelected = useCallback(async (): Promise<void> => {
+    // selectedIds in deps re-creates this callback on selection change.
+    // Acceptable here – the callback isn't passed to React.memo'd children
+    // or used as effect dep. For a larger component tree, a ref pattern
+    // would be preferable.
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
 
