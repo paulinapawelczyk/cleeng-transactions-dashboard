@@ -44,9 +44,17 @@ interface MockObjectURLResult {
 
 export function mockObjectURL(): MockObjectURLResult {
   const revokeObjectURLCalls: string[] = [];
-  URL.createObjectURL = vi.fn(() => 'blob:mock-url');
-  URL.revokeObjectURL = vi.fn((url: string) => {
-    revokeObjectURLCalls.push(url);
+
+  // stubGlobal pairs with vi.unstubAllGlobals() in vitest.setup.ts so the
+  // original URL is restored after each test — no manual teardown needed
+  // in individual test files.
+  vi.stubGlobal('URL', {
+    ...URL,
+    createObjectURL: vi.fn(() => 'blob:mock-url'),
+    revokeObjectURL: vi.fn((url: string) => {
+      revokeObjectURLCalls.push(url);
+    }),
   });
+
   return { revokeObjectURLCalls };
 }
